@@ -13,6 +13,7 @@ Script.prototype.start = function(){
 
 Script.prototype.getFile = function(){
 	var args = process.argv;
+	var that = this;
 	args.forEach(function (val, index, array) {
 		if(val.indexOf(".txt")>0){
 			console.log(val);
@@ -21,26 +22,25 @@ Script.prototype.getFile = function(){
 				if (err) {
 					throw err;
 				}
-				var input = this.parseStringToInput(data.toString());
+				var  d = data.toString();
+				var input = that.parseStringToInput(d);
 				input.fileName = val;
-				this.arrBufferInput.push(inputs);
+				that.arrBufferInput.push(input);
 			});
 		}	
 	});
 };
 
 Script.prototype.parseStringToInput = function(str){
+	//console.log("Parse data:  " + str);
 	var strSplits = str.split("\r\n");
 	var rs ={
-		s: null,
-		m:null,
-		n:null,
 		machine :[],
 		job:[]
 	};
-	rs.s = strSplits[0].substring(0,strSplits[0].indexOf("//"));
-	rs.m = strSplits[1].substring(0,strSplits[1].indexOf("//"));
-	rs.n = strSplits[2].substring(0,strSplits[2].indexOf("//"));
+	rs.s = strSplits[0].substring(0,strSplits[0].indexOf("//")).trim();
+	rs.m = strSplits[1].substring(0,strSplits[1].indexOf("//")).trim();
+	rs.n = strSplits[2].substring(0,strSplits[2].indexOf("//")).trim();
 	var i =3, commentCount =0; var kb = true;
 	for(i; i < strSplits.length; i++){
 		if(strSplits[i].trim() ==""){
@@ -78,11 +78,13 @@ Script.prototype.canCalculation = function(){
 Script.prototype.calculationAlgorithm = function(){
 	if( !this.canCalculation()){
 		setTimeout(this.calculationAlgorithm.bind(this), 100);
+		return;
 	}
 	var input 	= this.arrBufferInput.shift();
+	console.log(input);
 	var ouput 	= this.algorithm(input);
 
-	
+	console.log(input.n);
 	var result 	= {
 		input 	: input, // cua ngan
 		ouput 	: ouput
@@ -115,21 +117,21 @@ Script.prototype.writeFile = function()
 	var str =  output.input.s + " // s\r\n";
 	str += output.input.m + " // m\r\n";
 	str += output.input.n +" // n\r\n";
-	str+="\r\n// p, q, a"
+	str+="\r\n// p, q, a\r\n"
 	var index =1;
 	output.input.machine.forEach(function(element, idx, array){
 		str += element.p +" " + element.q +" "+ element.a +" // M" +index +"\r\n";
 		index++;
 	});
 	str+="\r\n//"
-	for(var j =1; j <= i;j++){
+	for(var j =1; j <= index;j++){
 		str += " M" + j;
 	}
 	str += "\r\n";
 	index =1;
 	output.input.job.forEach(function(el, idx, arr){
 		el.forEach(function(el1, idx1, arr1){
-			str += el +" ";
+			str += el1 +" ";
 		});
 		str += "// J" + index +"\r\n";
 		index ++;
@@ -138,9 +140,9 @@ Script.prototype.writeFile = function()
 	
 	// Write data into file
 	fs = require('fs');
-	fs.writeFile("output_for_" + ouput.input.fileName, str, function (err) {
+	fs.writeFile("output_for_" + output.input.fileName, str, function (err) {
 	  if (err) return console.log(err);
-	  console.log('Hello World > helloworld.txt');
+	  //
 	});
 
 };
