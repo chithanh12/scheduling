@@ -149,11 +149,11 @@ Script.prototype.combineJob = function(input){
 		input.job.forEach(function(job, idx, arr1){
 			j.push(job[index]);
 		});
-		var totalOfcurrentPackage =0;	
+		var totalOfcurrentPackage =0;
 		var currentJob = 1;
 		var data =[];
 		while(j.length > 0){
-			var quantity = el.q - totalOfcurrentPackage;
+			var quantity = el.q >= (j[0] + totalOfcurrentPackage)? j[0] : el.q - totalOfcurrentPackage;
 			data.push({job : currentJob, quantity: quantity});
 			if(j[0]>= quantity){
 				totalOfcurrentPackage =0;
@@ -236,6 +236,9 @@ Script.prototype.writeFile = function()
 	  //
 	});
 };
+
+
+
 
 Script.prototype.packageToString = function(pack){
 	var rs = "";
