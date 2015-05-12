@@ -2,10 +2,19 @@
 var Script = function(){
 	this.arrBufferInput 	= [];
 	this.arrBufferOuput 	= [];
+	this.debugMode = false;
 };
 
 Script.prototype.start = function(){
 	// load + read file
+	var args = process.argv;
+	var that = this;
+	args.forEach(function(el, idx, arr){
+		if(el =="-debug"){
+			that.debugMode = true;
+		}
+	});
+	
 	this.getFile();
 	this.calculationAlgorithm();
 	this.writeFile();
@@ -145,6 +154,7 @@ Script.prototype.combineJob = function(input){
 		var machine ={
 			totalTime: 0,
 			processUnitTime : 1*el.p,
+			processQty: 1*el.q,
 			package: [],
 			startTimes:[],
 			name: index
@@ -242,9 +252,51 @@ Script.prototype.writeFile = function()
 	  if (err) return console.log(err);
 	  //
 	});
+	
+	
+	// If in debug mode we should write html for easy to see the output
+	if(this.debugMode){
+		this.writeHtml(output);
+	}
 };
 
-
+Script.prototype.writeHtml = function(output){
+	var totalColumn =0;
+	output.output.forEach(function(el, index, arr){
+		if(el.startTimes[el.startTimes.length-1] + el.processUnitTime > totalColumn){
+			totalColumn = el.startTimes[el.startTimes.length-1] + el.processUnitTime;
+		}
+	});
+	
+	var str ='<html><head><link href="style.css" rel="stylesheet"></head><body><table cellspacing="0">';
+	output.output.forEach(function(el, idx, arr){
+		for(var h =0 ; h < el.processQty; h++){
+			str +='<tr><td class="cell"></td>';
+			var startTimeIndex =0;
+			var packageIndex =0;
+			for(var j =0; j < totalColumn; j++){
+				if(el.startTimes[startTimeIndex] == j){
+					
+				}
+				
+			}
+			str+='</tr>';
+		}
+		// add empty row
+		str+='<tr>';
+		for(var i=0; i<= totalColumn; i++){
+			str +='<td class="cell"></td>'
+		}
+		str+='</tr>';
+	});
+	
+	str+='</table></body></html>';
+	fs = require('fs');
+	fs.writeFile("output_for_" + output.input.fileName+".html", str, function (err) {
+	  if (err) return console.log(err);
+	  //
+	});
+};
 
 
 Script.prototype.packageToString = function(pack){
