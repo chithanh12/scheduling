@@ -84,10 +84,10 @@ Script.prototype.calculationAlgorithm = function(){
 	console.log(input);
 	var ouput 	= this.algorithm(input);
 
-	console.log(input.n);
+	//console.log(input.n);
 	var result 	= {
 		input 	: input, // cua ngan
-		ouput 	: ouput
+		output 	: ouput
 	}
 
 	this.arrBufferOuput.push(result);
@@ -95,20 +95,97 @@ Script.prototype.calculationAlgorithm = function(){
 };
 
 Script.prototype.algorithm = function(input){
-	//STUB
-	//TODO: replace this by our algorithm
-	var rs = [{
-		time 	: 0, // thoi gian bat dau
-		data 	: [{
-			job 		: 1, // cong viec so may
-			quantity	: 2 // so luong cong viec
-		}]
-	}];
+	var combineJobs = this.combineJob(input);
+	var startTime =0;
+	var rs =[];
+	while(combineJobs.length > 0){
+		var longest = null;
+		startTime++;
+		var indexOfEl = -1;
+		combineJobs.forEach(function(el, idx, arr){
+			if((startTime==1 || startTime% el.processUnitTime==0) && el.startTimes.length != el.package.length){
+				// Process can start
+				if(longest == null){
+					longest = el;
+					indexOfEl = idx;
+				}else if(longest.totalTime < el.totalTime){
+					longest = el;
+					indexOfEl =idx;
+				}
+			}
+		});
+		if(longest != null){
+			longest.startTimes.push(startTime);
+			longest.totalTime -= longest.processUnitTime;
+			if(longest.startTimes.length == longest.package.length){
+				combineJobs.splice(indexOfEl, 1);
+				rs.push(longest);
+			}
+		}
+	};
+	return rs;
+};
+
+//
+// return a package for each machine as the result 
+// result = [ machine1, machine2, machine3]
+// machine1 = {
+//		row:[[{job: xx, quantity: yy},{job: xx, quantity: yy}],...],
+//		totalTime: xxx
+//		processUnitTime :yy}
+
+Script.prototype.combineJob = function(input){
+	var rs =[];
+	var i=0;
+	input.machine.forEach(function(el, index, arr){
+		var machine ={
+			totalTime: 0,
+			processUnitTime : el.p,
+			package: [],
+			startTimes:[]
+		};
+		
+		var j =[];
+		input.job.forEach(function(job, idx, arr1){
+			j.push(job[index]);
+		});
+		var totalOfcurrentPackage =0;	
+		var currentJob = 1;
+		var data =[];
+		while(j.length > 0){
+			var quantity = el.q - totalOfcurrentPackage;
+			data.push({job : currentJob, quantity: quantity});
+			if(j[0]>= quantity){
+				totalOfcurrentPackage =0;
+				if(j[0]== quantity){
+					j.shift();
+					currentJob++;
+				}else{
+					j[0] -= quantity;
+				}
+				machine.package.push(data);
+				data =[];
+			}else{
+				totalOfcurrentPackage +=quantity;
+				currentJob++;
+				j.shift();
+			}
+		}
+		
+		if(data.length > 0){
+			machine.package.push(data);
+		}
+		
+		machine.totalTime = machine.package.length * machine.processUnitTime;
+		
+		rs.push(machine);
+	});
 	return rs;
 };
 
 Script.prototype.writeFile = function()
 {
+	var that = this;
 	if( !this.arrBufferOuput.length)	{
 		setTimeout(this.writeFile.bind(this), 50);
 		return;
@@ -136,7 +213,21 @@ Script.prototype.writeFile = function()
 		str += "// J" + index +"\r\n";
 		index ++;
 	});
-	//TODO: Implement output
+	//TODO: Implement write 
+	output.output.forEach(function(el, idx, arrs){
+		el.startTimes.forEach(function(el1, idx1, arr1){
+			if(idx1 ==0){
+				str += "("+ el1 +";";	
+			}else {
+				str += " ("+ el1 +";";
+			}
+			
+			str += that.packageToString(el.package[idx1]);
+			str += ")";
+			
+		});
+		str += "\r\n";
+	});
 	
 	// Write data into file
 	fs = require('fs');
@@ -144,7 +235,18 @@ Script.prototype.writeFile = function()
 	  if (err) return console.log(err);
 	  //
 	});
+};
 
+Script.prototype.packageToString = function(pack){
+	var rs = "";
+	pack.forEach(function(p, indx, arr){
+		if(indx> 0){
+			rs += "+" + p.job +"." + p.quantity;
+		}else{
+			rs += p.job +"." + p.quantity;
+		}
+	});
+	return rs;
 };
 
 var script = new Script();
