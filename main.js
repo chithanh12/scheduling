@@ -16,7 +16,7 @@ Script.prototype.getFile = function(){
 	var that = this;
 	args.forEach(function (val, index, array) {
 		if(val.indexOf(".txt")>0){
-			console.log(val);
+			//console.log(val);
 			var fs = require("fs");
 			fs.readFile(val, function (err, data) {
 				if (err) {
@@ -81,7 +81,7 @@ Script.prototype.calculationAlgorithm = function(){
 		return;
 	}
 	var input 	= this.arrBufferInput.shift();
-	console.log(input);
+	//console.log(input);
 	var ouput 	= this.algorithm(input);
 
 	//console.log(input.n);
@@ -96,14 +96,18 @@ Script.prototype.calculationAlgorithm = function(){
 
 Script.prototype.algorithm = function(input){
 	var combineJobs = this.combineJob(input);
+	//console.log(combineJobs);
 	var startTime =0;
 	var rs =[];
+	for(var i =0; i< combineJobs.length; i++){
+		rs.push(null);
+	}
 	while(combineJobs.length > 0){
 		var longest = null;
 		startTime++;
-		var indexOfEl = -1;
+		var indexOfEl = 0;
 		combineJobs.forEach(function(el, idx, arr){
-			if((startTime==1 || startTime% el.processUnitTime==0) && el.startTimes.length != el.package.length){
+			if((startTime ==1 || (startTime% el.processUnitTime)==0)){
 				// Process can start
 				if(longest == null){
 					longest = el;
@@ -119,7 +123,7 @@ Script.prototype.algorithm = function(input){
 			longest.totalTime -= longest.processUnitTime;
 			if(longest.startTimes.length == longest.package.length){
 				combineJobs.splice(indexOfEl, 1);
-				rs.push(longest);
+				rs[longest.name] = longest;
 			}
 		}
 	};
@@ -140,42 +144,43 @@ Script.prototype.combineJob = function(input){
 	input.machine.forEach(function(el, index, arr){
 		var machine ={
 			totalTime: 0,
-			processUnitTime : el.p,
+			processUnitTime : 1*el.p,
 			package: [],
-			startTimes:[]
+			startTimes:[],
+			name: index
 		};
 		
 		var j =[];
 		input.job.forEach(function(job, idx, arr1){
-			j.push(job[index]);
+			j.push(1*job[index]);
 		});
 		var totalOfcurrentPackage =0;
 		var currentJob = 1;
 		var data =[];
 		while(j.length > 0){
-			var quantity = el.q >= (j[0] + totalOfcurrentPackage)? j[0] : el.q - totalOfcurrentPackage;
+			if(j[0]==0){
+				j.shift();
+				currentJob++;
+				continue;
+			}
+			var capility = el.q - totalOfcurrentPackage;
+			var quantity = 1*j[0] >= capility ? capility : 1*j[0];
+			totalOfcurrentPackage += quantity;
 			data.push({job : currentJob, quantity: quantity});
-			if(j[0]>= quantity){
+			
+			j[0] -= quantity;
+			
+			if(totalOfcurrentPackage == el.q){
 				totalOfcurrentPackage =0;
-				if(j[0]== quantity){
-					j.shift();
-					currentJob++;
-				}else{
-					j[0] -= quantity;
-				}
 				machine.package.push(data);
 				data =[];
-			}else{
-				totalOfcurrentPackage +=quantity;
-				currentJob++;
-				j.shift();
 			}
 		}
 		
 		if(data.length > 0){
 			machine.package.push(data);
 		}
-		
+		//console.log(machine);
 		machine.totalTime = machine.package.length * machine.processUnitTime;
 		
 		rs.push(machine);
@@ -214,7 +219,9 @@ Script.prototype.writeFile = function()
 		index ++;
 	});
 	//TODO: Implement write 
+	str +='\r\n';
 	output.output.forEach(function(el, idx, arrs){
+		//str += el.name;
 		el.startTimes.forEach(function(el1, idx1, arr1){
 			if(idx1 ==0){
 				str += "("+ el1 +";";	
