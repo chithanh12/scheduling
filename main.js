@@ -116,7 +116,7 @@ Script.prototype.algorithm = function(input){
 		startTime++;
 		var indexOfEl = 0;
 		combineJobs.forEach(function(el, idx, arr){
-			if((startTime ==1 || (startTime% el.processUnitTime)==0)){
+			if(startTime ==1 || (el.lastProcess== undefined || (startTime >=el.lastProcess))){
 				// Process can start
 				if(longest == null){
 					longest = el;
@@ -129,6 +129,7 @@ Script.prototype.algorithm = function(input){
 		});
 		if(longest != null){
 			longest.startTimes.push(startTime);
+			longest.lastProcess = startTime + longest.processUnitTime;
 			longest.totalTime -= longest.processUnitTime;
 			if(longest.startTimes.length == longest.package.length){
 				combineJobs.splice(indexOfEl, 1);
@@ -268,29 +269,85 @@ Script.prototype.writeHtml = function(output){
 		}
 	});
 	
-	var str ='<html><head><link href="style.css" rel="stylesheet"></head><body><table cellspacing="0">';
+	var str ='<html><head><link href="style.css" rel="stylesheet"></head><body><h3>JOB SCHEDULING</h3><div  style="float:left;"><table cellspacing="0">';
 	output.output.forEach(function(el, idx, arr){
 		for(var h =0 ; h < el.processQty; h++){
-			str +='<tr><td class="cell"></td>';
-			var startTimeIndex =0;
-			var packageIndex =0;
+			if(h==0){
+				str+='<tr><td rowspan="'+ el.processQty+'">M'+ (el.name +1)+'</td>'
+			}else{
+				str +='<tr>';	
+			}
+			
+			var blocks = [];
+			el.package.forEach(function(p,idx1, arr1){
+				var currentHeight =0;
+				p.forEach(function(b, idx2, arr2){
+					currentHeight+= b.quantity;
+					var block ={
+						x: el.startTimes[idx1],
+						y: el.processQty - currentHeight,
+						qty: b.quantity,
+						job: b.job
+					};
+					blocks.push(block);
+				});
+			});
+			
+			// Draw each block for job 
 			for(var j =0; j < totalColumn; j++){
-				if(el.startTimes[startTimeIndex] == j){
-					
+				var minY = -1;
+				var block = null;
+				for(var t=0; t< blocks.length; t++){
+					if(blocks[t].x == j){
+						if(blocks[t].y < minY || minY <0){
+							minY = blocks[t].y;
+						}
+						if(blocks[t].y == h){
+							block = blocks[t];
+						}
+					}
 				}
 				
+				if(block !=null){
+										
+					str +='<td colspan="' + el.processUnitTime +'" rowspan="'+ block.qty +'" class="job' + block.job +'"></td>'; 
+					j+= el.processUnitTime -1;
+				}else{
+					
+					if(minY >=0){
+						
+						if(minY <= h){
+							j += el.processUnitTime - 1; // subtract 1 becasue the loop will increase it
+						}else{
+							str += '<td class="cell"></td>';		
+						}
+					}else{
+						str += '<td class="cell"></td>';	
+					}
+				}
 			}
+			
 			str+='</tr>';
 		}
 		// add empty row
+		
 		str+='<tr>';
 		for(var i=0; i<= totalColumn; i++){
 			str +='<td class="cell"></td>'
 		}
 		str+='</tr>';
 	});
-	
-	str+='</table></body></html>';
+	str+= '<tr>'
+	for(var t =0; t <= totalColumn; t++){
+		str +='<td align="center">' + (t+1) +'</td>';
+	}
+	str+'</tr>';
+	str+='</table></div>';
+	str+='<div style="width:60px; float:left; margin-left: 20px;">'
+	output.input.job.forEach(function(e, idx, arrs){
+		str+='<span class="job'+ (idx+1)+'"> JOB ' + (idx+1) +'</span> <br />'
+	});
+	str+='</div></body></html>';
 	fs = require('fs');
 	fs.writeFile("output_for_" + output.input.fileName+".html", str, function (err) {
 	  if (err) return console.log(err);
