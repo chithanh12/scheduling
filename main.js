@@ -10,7 +10,7 @@ Script.prototype.start = function(){
 	var args = process.argv;
 	var that = this;
 	args.forEach(function(el, idx, arr){
-		if(el =="-debug"){
+		if(el =="-html"){
 			that.debugMode = true;
 		}
 	});
