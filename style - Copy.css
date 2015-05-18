@@ -1,0 +1,38 @@
+table, th, td {
+   border: 1px solid black;
+} 
+.cell, .job1, .job2, .job3, .job4, .job5, .job6, .job7, .job8, .job9, .job10{
+	width: 15px;
+	padding:2px;
+	height: 15px;
+}
+.job1{
+	background: #FFBF00;
+}
+.job2{
+	background: #F6E3CE;
+}
+.job3{
+	background: #FE642E;
+}
+.job4{
+	background: #81BEF7;
+}
+.job5{
+	background: #F5A9E1;
+}
+.job6{
+	background: #F6CEEC;
+}
+.job7{
+	background: #F5A9BC;
+}
+.job8{
+	background: #B4045F;
+}
+.job9{
+	background: #80FF00;
+}
+.job10{
+	background: #0080FF;
+}

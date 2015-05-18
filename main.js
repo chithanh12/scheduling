@@ -33,13 +33,15 @@ Script.prototype.getFile = function(){
 				}
 				var  d = data.toString();
 				var input = that.parseStringToInput(d);
-				input.fileName = val;
+				input.fileName = that.getFilename(val);
 				that.arrBufferInput.push(input);
 			});
 		}	
 	});
 };
-
+Script.prototype.getFilename = function(fullPath){
+	return fullPath.replace(/^.*(\\|\/|\:)/, '');
+};
 Script.prototype.parseStringToInput = function(str){
 	//console.log("Parse data:  " + str);
 	var strSplits = str.split("\r\n");
@@ -63,6 +65,9 @@ Script.prototype.parseStringToInput = function(str){
 			}
 			commentCount++;
 			continue;
+		}else if(i == 6+ (1*rs.m)){
+			kb = false;
+			continue;
 		}
 		var rowData = strSplits[i].substring(0, strSplits[i].indexOf("//")).trim().split(" ");
 		if(kb){
@@ -75,9 +80,11 @@ Script.prototype.parseStringToInput = function(str){
 			rs.machine.push(machine);
 		}else{
 			// Read Job matrix
+			//console.log(rowData);
 			rs.job.push(rowData);
 		}
 	}
+	//console.log('finish read file');
 	return rs;
 };
 
@@ -98,7 +105,7 @@ Script.prototype.calculationAlgorithm = function(){
 		input 	: input, // cua ngan
 		output 	: ouput
 	}
-
+	//console.log('finish scheduling jobs');
 	this.arrBufferOuput.push(result);
 
 };
@@ -112,6 +119,7 @@ Script.prototype.algorithm = function(input){
 		rs.push(null);
 	}
 	while(combineJobs.length > 0){
+		//console.log('jobs: ' + combineJobs.length + '; startTime: ' + startTime );
 		var longest = null;
 		startTime++;
 		var indexOfEl = 0;
@@ -121,7 +129,7 @@ Script.prototype.algorithm = function(input){
 				if(longest == null){
 					longest = el;
 					indexOfEl = idx;
-				}else if(longest.totalTime < el.totalTime){
+				}else if(longest.totalTime <= el.totalTime){
 					longest = el;
 					indexOfEl =idx;
 				}
@@ -130,8 +138,10 @@ Script.prototype.algorithm = function(input){
 		if(longest != null){
 			longest.startTimes.push(startTime);
 			longest.lastProcess = startTime + longest.processUnitTime;
+			
 			longest.totalTime -= longest.processUnitTime;
-			if(longest.startTimes.length == longest.package.length){
+			//console.log('startTime: ' + longest.startTimes.length +'; package: ' + longest.package.length);
+			if(longest.startTimes.length >= longest.package.length){
 				combineJobs.splice(indexOfEl, 1);
 				rs[longest.name] = longest;
 			}
@@ -165,6 +175,7 @@ Script.prototype.combineJob = function(input){
 		input.job.forEach(function(job, idx, arr1){
 			j.push(1*job[index]);
 		});
+		//console.log('j: ' + j.length);
 		var totalOfcurrentPackage =0;
 		var currentJob = 1;
 		var data =[];
@@ -249,7 +260,7 @@ Script.prototype.writeFile = function()
 	
 	// Write data into file
 	fs = require('fs');
-	fs.writeFile("output_for_" + output.input.fileName, str, function (err) {
+	fs.writeFile("output/output_for_" + output.input.fileName, str, function (err) {
 	  if (err) return console.log(err);
 	  //
 	});
@@ -310,7 +321,7 @@ Script.prototype.writeHtml = function(output){
 				
 				if(block !=null){
 										
-					str +='<td colspan="' + el.processUnitTime +'" rowspan="'+ block.qty +'" class="job' + block.job +'"></td>'; 
+					str +='<td align="center" colspan="' + el.processUnitTime +'" rowspan="'+ block.qty +'" class="job' + block.job +'"> J'+ block.job+'</td>'; 
 					j+= el.processUnitTime -1;
 				}else{
 					
@@ -342,14 +353,14 @@ Script.prototype.writeHtml = function(output){
 		str +='<td align="center">' + (t+1) +'</td>';
 	}
 	str+'</tr>';
-	str+='</table></div>';
+	str+='</table></div><br/>';
 	str+='<div style="width:60px; float:left; margin-left: 20px;">'
 	output.input.job.forEach(function(e, idx, arrs){
 		str+='<span class="job'+ (idx+1)+'"> JOB ' + (idx+1) +'</span> <br />'
 	});
 	str+='</div></body></html>';
 	fs = require('fs');
-	fs.writeFile("output_for_" + output.input.fileName+".html", str, function (err) {
+	fs.writeFile("output/output_for_" + output.input.fileName+".html", str, function (err) {
 	  if (err) return console.log(err);
 	  //
 	});
