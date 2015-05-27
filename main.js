@@ -158,7 +158,10 @@ Script.prototype.algorithm = function (input) {
                 if (longest == null) {
                     longest = el;
                     indexOfEl = idx;
-                } else if (longest.totalTime <= el.totalTime) {
+                } else if (longest.totalTime < el.totalTime) {
+                    longest = el;
+                    indexOfEl = idx;
+                } else if (longest.totalTime == el.totalTime && longest.processUnitTime < el.processUnitTime) {
                     longest = el;
                     indexOfEl = idx;
                 }
@@ -528,6 +531,9 @@ Script.prototype.kmeansAlgorithm = function (input) {
 };
 /** End KMean Algorithm***/
 
+Script.prototype.gaAlgorithm = function () {
+    //TODO:....
+};
 
 Script.prototype.acaAlgorithm = function (input) {
     var that = this;
